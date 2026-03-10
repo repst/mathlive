@@ -312,12 +312,20 @@ function onDelete(
         model.position = pos;
         return true;
       }
-      // Branch was removed, navigate out
-      if (branch === 'superscript' && direction === 'backward')
-        model.position = model.offsetOf(atom.firstChild) - 1;
-      else if (branch === 'subscript' && direction === 'backward') {
+      // Branch was removed, navigate out.
+      // For operators/extensible symbols, don't jump to the left of the base.
+      const keepAfterBase =
+        atom.type === 'extensible-symbol' || atom.type === 'operator';
+      if (branch === 'superscript' && direction === 'backward') {
+        if (keepAfterBase) {
+          if (atom.subscript)
+            model.position = model.offsetOf(atom.subscript[0].lastSibling);
+          else model.position = model.offsetOf(atom);
+        } else model.position = model.offsetOf(atom.firstChild) - 1;
+      } else if (branch === 'subscript' && direction === 'backward') {
         if (atom.superscript)
           model.position = model.offsetOf(atom.superscript[0].lastSibling);
+        else if (keepAfterBase) model.position = model.offsetOf(atom);
         else model.position = model.offsetOf(atom.firstChild) - 1;
       } else model.position = model.offsetOf(atom);
 
@@ -327,9 +335,15 @@ function onDelete(
     // Branch is not empty, handle navigation within branches
     if (branch === 'superscript') {
       if (direction === 'backward') {
-        const pos = model.offsetOf(atom.firstChild) - 1;
-        console.assert(pos >= 0);
-        model.position = pos;
+        if (atom.type === 'extensible-symbol' || atom.type === 'operator') {
+          if (atom.subscript)
+            model.position = model.offsetOf(atom.subscript[0].lastSibling);
+          else model.position = model.offsetOf(atom);
+        } else {
+          const pos = model.offsetOf(atom.firstChild) - 1;
+          console.assert(pos >= 0);
+          model.position = pos;
+        }
       } else if (atom.subscript)
         model.position = model.offsetOf(atom.subscript[0]);
       else model.position = model.offsetOf(atom);
@@ -338,8 +352,12 @@ function onDelete(
         // Subscript first: move to superscript end
         model.position = model.offsetOf(atom.superscript[0].lastSibling);
       } else if (direction === 'backward') {
-        // Subscript first: move to before
-        model.position = model.offsetOf(atom.firstChild) - 1;
+        if (atom.type === 'extensible-symbol' || atom.type === 'operator')
+          model.position = model.offsetOf(atom);
+        else {
+          // Subscript first: move to before
+          model.position = model.offsetOf(atom.firstChild) - 1;
+        }
       } else {
         // Subscript last: move after
         model.position = model.offsetOf(atom);

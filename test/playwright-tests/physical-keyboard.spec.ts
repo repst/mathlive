@@ -657,6 +657,24 @@ test('delete on int upper placeholder should remove the full branch', async ({ p
   expect(latex).toBe(String.raw`\int_{x}`);
 });
 
+test('deleting int branches should not jump left of integral', async ({ page }) => {
+  await page.goto('/dist/playwright-test-page/');
+
+  await page.locator('#mf-1').pressSequentially('int');
+  await page.locator('#mf-1').press('ArrowRight');
+  await page.locator('#mf-1').press('ArrowRight');
+  await page.locator('#mf-1').press('Backspace');
+  await page.locator('#mf-1').press('Backspace');
+  await page.locator('#mf-1').press('Backspace');
+
+  const latex = await page
+    .locator('#mf-1')
+    .evaluate((mfe: MathfieldElement) => mfe.value);
+
+  // Third backspace should delete the integral itself, not jump to its left.
+  expect(latex).toBe('');
+});
+
 
 test('nested subscripts - issue #2146', async ({ page }) => {
   await page.goto('/dist/playwright-test-page/');
