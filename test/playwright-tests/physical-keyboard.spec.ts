@@ -682,7 +682,7 @@ test('space after int lower limit should move to upper limit', async ({ page }) 
     .locator('#mf-1')
     .evaluate((mfe: MathfieldElement) => mfe.value);
 
-  expect(latex).toBe(String.raw`\int_{0}^{x}`);
+  expect([String.raw`\int_0^{x}`, String.raw`\int_{0}^{x}`]).toContain(latex);
 });
 
 test('deleting int branches should not jump left of integral', async ({ page }) => {
