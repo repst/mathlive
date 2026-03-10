@@ -350,7 +350,18 @@ export class MathModeEditor extends ModeEditor {
     if (options.selectionMode === 'placeholder') {
       // Move to the next placeholder
       let placeholder: Atom | undefined;
-      if (newAtoms.length === 1 && newAtoms[0].type === 'genfrac') {
+      if (
+        newAtoms.length === 1 &&
+        (newAtoms[0].type === 'extensible-symbol' ||
+          newAtoms[0].type === 'operator')
+      ) {
+        const subscript = newAtoms[0].branch('subscript');
+        placeholder = subscript?.find((x) => x.type === 'placeholder');
+        if (!placeholder) {
+          const superscript = newAtoms[0].branch('superscript');
+          placeholder = superscript?.find((x) => x.type === 'placeholder');
+        }
+      } else if (newAtoms.length === 1 && newAtoms[0].type === 'genfrac') {
         const numerator = newAtoms[0].branch('above');
         placeholder = numerator?.find((x) => x.type === 'placeholder');
         if (!placeholder) {
