@@ -643,6 +643,20 @@ test('typing characters in placeholder (issue #2572)', async ({ page }) => {
   expect(latex).toBe('x+y');
 });
 
+test('delete on int upper placeholder should remove the full branch', async ({ page }) => {
+  await page.goto('/dist/playwright-test-page/');
+
+  await page.locator('#mf-1').pressSequentially('int');
+  await page.locator('#mf-1').press('Backspace');
+  await page.locator('#mf-1').press('x');
+
+  const latex = await page
+    .locator('#mf-1')
+    .evaluate((mfe: MathfieldElement) => mfe.value);
+
+  expect(latex).toBe(String.raw`\int_{x}`);
+});
+
 
 test('nested subscripts - issue #2146', async ({ page }) => {
   await page.goto('/dist/playwright-test-page/');

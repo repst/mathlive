@@ -655,6 +655,57 @@ export function deleteRange(
         }
       );
     }
+
+    // If a placeholder in an operator/extensible symbol sub/sup branch is
+    // selected, delete the whole branch and move focus to the opposite branch.
+    if (
+      result.length === 1 &&
+      result[0].type === 'placeholder' &&
+      (result[0].parent.type === 'extensible-symbol' ||
+        result[0].parent.type === 'operator' ||
+        result[0].parent.type === 'subsup') &&
+      (result[0].parentBranch === 'superscript' ||
+        result[0].parentBranch === 'subscript')
+    ) {
+      const carrier = result[0].parent;
+      const branch = result[0].parentBranch;
+      const branchContent =
+        carrier
+          .branch(branch)
+          ?.filter(
+            (atom) => atom.type !== 'first' && atom.type !== 'placeholder'
+          ) ?? [];
+
+      if (branchContent.length === 0) {
+        const oppositeBranch =
+          branch === 'superscript' ? 'subscript' : 'superscript';
+        return model.deferNotifications(
+          { content: true, selection: true, type },
+          () => {
+            carrier.removeBranch(branch);
+
+            if (
+              carrier.type === 'subsup' &&
+              !carrier.subscript &&
+              !carrier.superscript
+            ) {
+              const pos = Math.max(0, model.offsetOf(carrier) - 1);
+              carrier.parent?.removeChild(carrier);
+              model.position = pos;
+              return;
+            }
+
+            const opposite = carrier
+              .branch(oppositeBranch)
+              ?.find((atom) => atom.type !== 'first');
+            if (opposite) {
+              const pos = model.offsetOf(opposite);
+              model.setSelection(Math.max(0, pos - 1), pos);
+            } else model.position = model.offsetOf(carrier);
+          }
+        );
+      }
+    }
   }
   return model.deferNotifications(
     { content: true, selection: true, type },
