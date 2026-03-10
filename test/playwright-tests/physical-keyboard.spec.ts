@@ -670,6 +670,21 @@ test('int should focus lower placeholder first', async ({ page }) => {
   expect(latex).toBe(String.raw`\int_{x}^{\placeholder{}}`);
 });
 
+test('space after int lower limit should move to upper limit', async ({ page }) => {
+  await page.goto('/dist/playwright-test-page/');
+
+  await page.locator('#mf-1').pressSequentially('int');
+  await page.locator('#mf-1').press('0');
+  await page.locator('#mf-1').press('Space');
+  await page.locator('#mf-1').press('x');
+
+  const latex = await page
+    .locator('#mf-1')
+    .evaluate((mfe: MathfieldElement) => mfe.value);
+
+  expect(latex).toBe(String.raw`\int_{0}^{x}`);
+});
+
 test('deleting int branches should not jump left of integral', async ({ page }) => {
   await page.goto('/dist/playwright-test-page/');
 

@@ -11,12 +11,22 @@ import { isArray } from '../common/types';
 
 export function moveAfterParent(model: _Model): boolean {
   const previousPosition = model.position;
-  const parent = model.at(previousPosition).parent;
+  const anchor = model.at(previousPosition);
+  const parent = anchor.parent;
   // Do nothing if at the root.
   if (!parent?.parent) {
     model.announce('plonk');
     return false;
   }
+
+  // For operators/extensible symbols with limits (e.g. \int), pressing space
+  // in the subscript should move to the superscript branch first.
+  if (
+    (parent.type === 'extensible-symbol' || parent.type === 'operator') &&
+    anchor.parentBranch === 'subscript' &&
+    parent.superscript
+  )
+    return select(model, parent.superscript);
 
   model.position = model.offsetOf(parent);
   model.mathfield.stopCoalescingUndo();
